@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Autonomous Boat Service">
+  <rect width="64" height="64" rx="16" fill="#0b2638"/>
+  <path d="M32 9 L32 33" stroke="#e9f3f6" stroke-width="3" stroke-linecap="round"/>
+  <path d="M34 12 L47 31 L34 31 Z" fill="#f28c28"/>
+  <path d="M30 15 L19 31 L30 31 Z" fill="#7fd3dc"/>
+  <path d="M12 36 H52 L46 45 H18 Z" fill="#e9f3f6"/>
+  <path d="M8 52 q6 -5 12 0 t12 0 t12 0 t12 0" fill="none" stroke="#0e7d8c" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

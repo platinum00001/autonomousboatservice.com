@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /staff.html
+Sitemap: https://platinum00001.github.io/autonomousboatservice.com/sitemap.xml
