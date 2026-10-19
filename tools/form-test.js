@@ -1,4 +1,5 @@
-// Live end-to-end test: submits a quote (with a photo), a partner application and a data request.
+// Live end-to-end test: submits a quote (with a photo, from a service page link), a parts request (with a photo),
+// a partner application and a data request.
 // Rows are named "E2E TEST" so they can be deleted afterward.
 const puppeteer = require('puppeteer-core');
 const base = process.argv[2] || 'https://platinum00001.github.io/autonomousboatservice.com/';
@@ -8,7 +9,9 @@ const photo = process.argv[3] || '/tmp/test-boat.jpg';
   const p = await b.newPage(); const errs = [];
   p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
   await p.setViewport({ width: 1280, height: 900 });
-  await p.goto(base, { waitUntil: 'networkidle2' });
+  await p.goto(base + 'quote.html?service=engine_outboard&town=Falmouth', { waitUntil: 'networkidle2' });
+  const prefill = await p.evaluate(() => [document.getElementById('q-service').value, document.getElementById('q-loc').value]);
+  await p.$eval('#q-loc', (e) => (e.value = ''));
   // consent required: submitting without it must fail
   await p.type('#q-name', 'E2E TEST boater'); await p.type('#q-phone', '508-555-0142'); await p.type('#q-email', 'e2e@test.invalid');
   await p.type('#q-make', 'Boston Whaler'); await p.type('#q-model', 'Montauk 170'); await p.type('#q-len', '17');
@@ -27,6 +30,18 @@ const photo = process.argv[3] || '/tmp/test-boat.jpg';
   await p.evaluate(() => document.getElementById('quote-success').scrollIntoView({ block: 'center' }));
   await p.screenshot({ path: process.env.SHOT || '/tmp/quote-success.png' });
 
+  await p.goto(base + 'parts.html', { waitUntil: 'networkidle2' });
+  await p.type('#pt-name', 'E2E TEST impeller kit'); await p.type('#pt-num', '6CE-W0078-00'); await p.type('#pt-make', 'Yamaha'); await p.type('#pt-model', 'F150');
+  await p.type('#pt-year', '2016'); await p.select('#pt-ful', 'pickup'); await p.type('#pt-loc', 'Falmouth');
+  await p.type('#pt-cname', 'E2E TEST parts'); await p.type('#pt-phone', '508-555-0144'); await p.type('#pt-email', 'e2e-parts@test.invalid');
+  await p.type('#pt-details', 'E2E TEST - please delete.');
+  const pin = await p.$('#pt-photos'); await pin.uploadFile(photo);
+  await p.click('#parts-form input[name=consent_share]'); await new Promise((r) => setTimeout(r, 3000));
+  await p.click('#parts-form button[type=submit]');
+  await p.waitForSelector('#parts-success:not([hidden])', { timeout: 30000 }).catch(() => {});
+  const partsOk = await p.$eval('#parts-success', (e) => !e.hidden);
+  const partsMsg = await p.$eval('#parts-form .form-msg', (e) => e.textContent);
+
   await p.goto(base + 'partners.html', { waitUntil: 'networkidle2' });
   await p.type('#p-shop', 'E2E TEST Marine'); await p.type('#p-contact', 'Pat Test'); await p.type('#p-phone', '508-555-0143');
   await p.type('#p-email', 'shop-e2e@test.invalid'); await p.click('input[value=engine_outboard]'); await p.click('input[value=mobile_dockside]');
@@ -39,6 +54,6 @@ const photo = process.argv[3] || '/tmp/test-boat.jpg';
   await p.type('#d-contact', 'e2e@test.invalid'); await p.type('#d-note', 'E2E TEST'); await new Promise((r) => setTimeout(r, 3000));
   await p.click('#data-form button[type=submit]'); await new Promise((r) => setTimeout(r, 4000));
   const dataMsg = await p.$eval('#data-form .form-msg', (e) => e.textContent);
-  console.log(JSON.stringify({ blockedWithoutConsent: noConsent, quoteOk, quoteMsg, partnerOk, dataMsg, errors: errs }, null, 1));
+  console.log(JSON.stringify({ blockedWithoutConsent: noConsent, prefill, quoteOk, quoteMsg, partsOk, partsMsg, partnerOk, dataMsg, errors: errs }, null, 1));
   await b.close();
 })();

@@ -29,7 +29,8 @@ Supabase → Authentication → URL Configuration → **Redirect URLs**, add bot
 - `https://platinum00001.github.io/autonomousboatservice.com/**`
 - `https://autonomousboatservice.com/**` (for later)
 
-Password sign-in works without this; magic links and reset emails need it.
+Password sign-in works without this. Magic links (staff page **and** the customer `account.html` page) and reset emails need it.
+The pattern `/**` covers `account.html` and `staff.html`.
 Supabase's built-in email is limited to a few messages per hour. For dependable email, connect Resend as custom SMTP
 (Authentication → Emails → SMTP), the same way as the other sites.
 
@@ -95,10 +96,21 @@ X: `autoboatservice`, `capeboatrepair`, `boatservicecc` are free (checked Oct 19
 Facebook and Instagram couldn't be checked automatically. Try `autonomousboatservice` on both.
 After you create an account, paste its URL into `config.js` → `SOCIAL`. The footer shows it automatically.
 
-## 8. Google / Facebook login
-Not used. There are no public member accounts, and staff use email login. If you ever add public sign-in, the provider
-callback URL is `https://oiousqgzqcjanikglkxl.supabase.co/auth/v1/callback`. Privacy has a `#data-deletion` section ready.
+## 8. Customer accounts, and Google / Facebook login
+Customers can sign in on `account.html` with an emailed link (already works once the Redirect URL above is added).
+The Google and Facebook buttons show **"Soon"** automatically while those providers are off. To turn one on:
+- **Google:** Google Cloud Console → OAuth client (Web). Authorized redirect URI: `https://oiousqgzqcjanikglkxl.supabase.co/auth/v1/callback`.
+  Then Supabase → Authentication → Providers → Google: paste the client ID and secret, and enable it.
+- **Facebook:** Meta for Developers → app → Facebook Login. Valid OAuth redirect URI: the same callback. Data-deletion URL: `…/privacy.html#data-deletion`.
+  Then Supabase → Providers → Facebook: paste the app ID and secret, and enable it.
+The buttons switch from "Soon" to live on their own (the page reads `/auth/v1/settings`). Guests can always send requests without an account.
 
-## 9. Partner shops
-Before you send any leads to a shop, agree referral terms with it in writing. Boaters consent on the form to have their
-request shared with partner shops; don't use their details for anything else.
+## 9. Partner shops and blind offers
+Before you send any offers to a shop, agree referral terms with it in writing (pay per lead, exclusive territory, or a sale or licence of the platform).
+On the staff page, set the shop's application to **approved**. Only approved shops can receive offers.
+Boaters consent to a two-step share: an anonymous summary goes to partner shops, and their contact details go to **one** matched shop only after they're matched.
+Don't use their details for anything else.
+
+**Automatic offer emails (TODO):** offers are delivered by copying the link or with the "Email shop" (mailto) button.
+To automate this later, add a Resend API key as an edge-function secret (`RESEND_API_KEY`) and send the offer link from
+`create_offers` in `supabase/functions/boatservice-api/index.ts` (look for `TODO(Resend)`). Send from a verified domain address.

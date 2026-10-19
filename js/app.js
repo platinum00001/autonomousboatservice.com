@@ -73,10 +73,31 @@
     });
     return sbPromise;
   };
-  ABS.pageURL = (page) => new URL(page, location.href).href.split("#")[0].split("?")[0];
+  // Site root comes from <body data-root> ("./" or "../"), so links work at any depth.
+  ABS.root = () => new URL((document.body && document.body.dataset.root) || "./", location.href).href;
+  ABS.pageURL = (page) => new URL(page, ABS.root()).href.split("#")[0].split("?")[0];
+
+  // Optional customer sign-in. Only load supabase-js when a saved session exists,
+  // so guest pages stay light. Returns { token, email } or null.
+  ABS.hasSavedSession = function () {
+    try { const ref = new URL(cfg().SUPABASE_URL).hostname.split(".")[0]; return !!localStorage.getItem("sb-" + ref + "-auth-token"); } catch (e) { return false; }
+  };
+  ABS.currentUser = async function () {
+    if (!ABS.hasSavedSession()) return null;
+    const sb = await ABS.getSupabase(); if (!sb) return null;
+    const { data } = await sb.auth.getSession();
+    const s = data && data.session;
+    return s ? { token: s.access_token, email: (s.user && s.user.email) || "" } : null;
+  };
+  async function applySignedIn() {
+    const u = await ABS.currentUser();
+    document.querySelectorAll(".acct").forEach((a) => { if (u) a.textContent = "My account"; });
+    document.querySelectorAll("[data-signed-in]").forEach((el) => { el.hidden = !u; const b = el.querySelector("[data-signed-email]"); if (b && u) b.textContent = u.email; });
+    document.querySelectorAll("[data-account-link]").forEach((el) => { el.hidden = !u; });
+  }
 
   document.addEventListener("DOMContentLoaded", () => {
-    applyPhone(); applyEmail(); applySocial();
+    applyPhone(); applyEmail(); applySocial(); applySignedIn();
     document.querySelectorAll("[data-year]").forEach((el) => (el.textContent = new Date().getFullYear()));
   });
 })();
