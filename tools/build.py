@@ -460,11 +460,10 @@ terms = head(f"Terms of Use | {NAME}", f"Terms for using {NAME}, a boat repair r
 </div></section>
 ''' + footer() + '</body>\n</html>\n'
 
-# ------------------------------------------------------------------ 404 (served for any missing path, so set a base first)
-nf_head = head(f"Page not found | {NAME}", "Page not found.", "404.html",
-  '<meta name="robots" content="noindex">\n').replace('<meta charset="utf-8">',
-  '<meta charset="utf-8">\n<script>(function(){var p=location.pathname,m="/autonomousboatservice.com/";document.write(\'<base href="\'+(p.indexOf(m)===0?m:"/")+\'">\');})();</script>')
-notfound = nf_head + header() + '''
+# ------------------------------------------------------------------ 404
+# GitHub Pages serves this for ANY missing path (e.g. /a/b/c), so relative links would break.
+# Every local link is made absolute from SITE_URL (rebuild after changing SITE_URL).
+notfound = head(f"Page not found | {NAME}", "Page not found.", "404.html", '<meta name="robots" content="noindex">\n') + header() + '''
 <section class="block"><div class="wrap narrow" style="text-align:center;padding:40px 20px">
   <p class="eyebrow">404</p>
   <h1>This page drifted off its mooring</h1>
@@ -472,6 +471,7 @@ notfound = nf_head + header() + '''
   <p><a class="btn" href="index.html#quote">Get a quote</a> <a class="btn ghost" href="index.html">Home</a></p>
 </div></section>
 ''' + footer() + '</body>\n</html>\n'
+notfound = re.sub(r'(href|src)="(?!https?:|mailto:|tel:|#|data:)([^"]+)"', lambda m: f'{m.group(1)}="{SITE_URL}{m.group(2)}"', notfound)
 
 for name, html in [("index.html", index), ("partners.html", partners), ("staff.html", staff), ("privacy.html", privacy), ("terms.html", terms), ("404.html", notfound)]:
     open(os.path.join(ROOT, name), "w").write(html)
